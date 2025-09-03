@@ -13,7 +13,7 @@ inline void pr_err(const std::string &errStr){
 
 class Gpio {
 public:
-    Gpio(const uint16_t pin, bool dir, const char * name = 0):_pin(pin), _name(name){
+    Gpio(const uint16_t pin, bool dir, const char * name = "\0"):_pin(pin), _name(name){
         _desc = gpio_new();
         if(_desc){
             gpio_open_sysfs(_desc, pin, dir ? GPIO_DIR_OUT : GPIO_DIR_IN);

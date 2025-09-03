@@ -12,22 +12,28 @@ using namespace std;
 
 int main(int argc, char ** argv){
     
-    StepMtr mtr({104, 106, 108, 113});
-    mtr.set_dir(StepMtr::BWD);
-    mtr.set_speed(10);
-    auto fut = std::async(std::launch::async, &StepMtr::run, &mtr);
-    sleep(2);
-    mtr.stop();
-    fut.wait();
+    {
+        StepMtr mtr({104, 106, 108, 113});
+        mtr.set_dir(StepMtr::BWD);
+        mtr.set_speed(10);
+        auto fut = std::async(std::launch::async, &StepMtr::run, &mtr);
+        sleep(5);
+        mtr.stop();
+        fut.wait();
+    }
 
-    sleep(1);
-    mtr.reset();
-
-    mtr.set_dir(StepMtr::FWD);
-    fut = std::async(std::launch::async, &StepMtr::run, &mtr);
     sleep(2);
-    mtr.stop();
-    fut.wait();
+    cout << "forward" << endl;
+
+    {
+        StepMtr mtr({106, 104, 113, 108});
+        mtr.set_dir(StepMtr::BWD);
+        mtr.set_speed(10);
+        auto fut = std::async(std::launch::async, &StepMtr::run, &mtr);
+        sleep(5);
+        mtr.stop();
+        fut.wait();
+    }
     // mtr.set_dir(StepMtr::BWD);
     // cout << "BWD to 0" << endl;
     // fut = std::async(std::launch::async, &StepMtr::run_pos, &mtr, 0);
