@@ -34,15 +34,50 @@ void init_mtr(StepMtr &mtr){
 int main(int argc, char ** argv){
     // exec_cmd();
     StepMtr mtr({104,106, 108, 113});
-    mtr.init();
-    char ch = 0;
-    while ((ch=getchar()) != 'q') {
-        if(ch == '+')
-            mtr.set_dir(StepMtr::FWD);
-        else if( ch == '-')
-            mtr.set_dir(StepMtr::BWD);
-        else continue;
-        mtr.next_step();
+    // mtr.init(120);
+    // mtr.set_pos_limit(0, 100);
+    char cmd = 0;
+    bool started = true;
+    while (true) {
+        cin >> cmd;
+        switch(cmd){
+            case 'q':{
+                started = false;
+                break;
+            }
+            case 'i':{
+                int step_range;
+                cin >> step_range;
+                cout << "init: \n";
+                mtr.init(step_range);
+                break;
+            }
+            case 'p': {// pos mode
+                int pos;
+                cin >> pos;
+                cout << "run_pos: \n";
+                mtr.run_pos(pos);
+                break;
+            }
+            case 's':{ //step mode
+                char dir;
+                cin >> dir;
+                if(dir == '+') mtr.set_dir(StepMtr::FWD);
+                else if(dir == '-') mtr.set_dir(StepMtr::BWD);
+                else break;
+                cout << "step: " << dir << endl;
+                mtr.next_step();
+                break;
+            }
+            case 'v':{
+                int speed;
+                cin >> speed;
+                mtr.set_speed(speed);
+                break;
+            }
+            default:
+                break;
+        }
         std::cout << "pos: " << mtr.get_pos() << endl;
     }
 }

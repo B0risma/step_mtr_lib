@@ -35,7 +35,7 @@ public:
         FWD = 1,
         BWD = -1
     };
-    void init();
+    void init(const int step_range);
 
     void set_mode(Mode mod);
     inline bool is_busy() const {return busy;}

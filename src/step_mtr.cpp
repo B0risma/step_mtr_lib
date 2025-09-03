@@ -44,28 +44,32 @@ void StepMtr::next_step(){
     pos+= _dir;
     cout << "next step " << step_n << endl;
 }
-void StepMtr::init(){
+void StepMtr::init(const int step_range){
     reset();
-    set_pos_limit(-1000, 1000);
+    set_pos_limit(-step_range, step_range);
     set_dir(StepMtr::BWD);
     set_speed(100);
     run_pos(pos_limit.first);
+    set_pos_limit(0, step_range);
     reset();
 }
 
 void StepMtr::run_pos(int t_pos){
     int tmp_pos = clamp(t_pos, pos_limit.first, pos_limit.second);
-    if(tmp_pos != t_pos) return;
-
+    if(tmp_pos != t_pos || t_pos == pos) return;
+    const int32_t steps = int32_t(t_pos - pos);
+    set_dir(steps < 0 ? BWD : FWD);
+    std::cout << __func__ << " dir " << _dir << endl;
+    // steps = abs(steps);
     busy = true;
     started = true;
+    int sleep_ms = 1000/this->speed; //ms
     {
         lock_guard<mutex>lk(notice_mx);
         notice.notify_one();
     }
     while(this->get_pos() != t_pos && started){
         next_step();
-        int sleep_ms = 1000/this->speed; //ms
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
     }
     busy = false;
@@ -89,13 +93,13 @@ void StepMtr::run(){
 
     busy = true;
     started = true;
+    int sleep_ms = 1000/this->speed; //ms
     {
         lock_guard<mutex>lk(notice_mx);
         notice.notify_one();
     }
     while(this->started){
         this->next_step();
-        int sleep_ms = 1000/this->speed; //ms
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
     }
     busy = false;
