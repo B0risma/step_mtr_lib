@@ -21,6 +21,7 @@ public:
     void run_pos(int pos);
     inline void reset(){
         pos = 0;
+        step_n = 0;
     }
 
     // infinity run
@@ -39,7 +40,7 @@ public:
     inline bool is_busy() const {return busy;}
     inline bool is_started() const{return started;}
 
-    inline void set_dir(Dir dir){this->dir = dir;}
+    inline void set_dir(Dir dir){this->_dir = dir;}
     inline void set_speed(int spd){speed = abs(spd);}
     inline void wait_start(){
         std::unique_lock<std::mutex> lk(notice_mx);
@@ -55,7 +56,7 @@ private:
     std::array<step_cmd, 4> step_q = {0b1010, 0b0110, 0b0101, 0b1001};
     int step_n = 0;
     bool mtr_started = false;
-    int dir = 1; //-1 1
+    int _dir = 1; //-1 1
     //B2 B1 A2 A1 - reverse order for direct bit access
     std::array<Gpio, 4> pins;
     int pos = 0;

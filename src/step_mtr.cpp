@@ -19,10 +19,10 @@ T clamp(const T& in, const T& min, const T& max){
 }
 
 StepMtr::StepMtr(const std::initializer_list<int> &list){
-    pins[0] = Gpio(*list.begin(), 1, "A1");
-    pins[1] = Gpio(*(list.begin()+1), 1, "A2");
-    pins[2] = Gpio(*(list.begin()+2), 1, "B1");
-    pins[3] = Gpio(*(list.begin()+3), 1, "B2");
+    pins[3] = Gpio(*list.begin(), 1, "A1");
+    pins[2] = Gpio(*(list.begin()+1), 1, "A2");
+    pins[1] = Gpio(*(list.begin()+2), 1, "B1");
+    pins[0] = Gpio(*(list.begin()+3), 1, "B2");
     busy = false;
     started = false;
 }
@@ -31,12 +31,10 @@ void StepMtr::next_step(){
     cout << "step (A1 A2 B1 B2) " <<  step_n << " " << step_q[step_n] << endl;
     for(auto pin_n : {0,1,2,3}){
         bool val = step_q[step_n][pin_n];
-        if(dir == BWD) val = !val;
         pins[pin_n].write(val);
     }
-    step_n = (step_n+dir)%4;
-    if(step_n < 0) step_n = 4 + step_n;
-    pos+= dir;
+    step_n = (step_n+_dir) & 3;
+    pos+= _dir;
     // cout << "next step " << step_n << endl;
 }
 
@@ -51,7 +49,6 @@ void StepMtr::run_pos(int t_pos){
         notice.notify_one();
     }
     while(this->pos != t_pos && started){
-        int new_pos = pos + dir;
         next_step();
         int sleep_ms = 1000/this->speed; //ms
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
