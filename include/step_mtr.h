@@ -21,7 +21,6 @@ public:
     void run_pos(int pos);
     inline void reset(){
         pos = 0;
-        step_n = 0;
     }
 
     // infinity run
@@ -36,16 +35,19 @@ public:
         FWD = 1,
         BWD = -1
     };
+    void init();
+
     void set_mode(Mode mod);
     inline bool is_busy() const {return busy;}
     inline bool is_started() const{return started;}
-
+    inline void set_pos_limit(int min, int max){pos_limit = {min,max};}
     inline void set_dir(Dir dir){this->_dir = dir;}
     inline void set_speed(int spd){speed = abs(spd);}
     inline void wait_start(){
         std::unique_lock<std::mutex> lk(notice_mx);
         notice.wait(lk, [&](){return is_started();});
     }
+    inline const int &get_pos(){return pos;}
     
     using step_cmd = std::bitset<4>; ///< A1 - MSB
 

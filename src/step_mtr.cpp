@@ -1,6 +1,7 @@
 #include "step_mtr.h"
 #include "gpio_rai.hpp"
 #include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <mutex>
 #include <thread>
@@ -34,14 +35,22 @@ StepMtr::StepMtr(const std::initializer_list<int> &list){
 }
 
 void StepMtr::next_step(){
-    cout << "step (A1 A2 B1 B2) " <<  step_n << " " << step_q[step_n] << endl;
+    cout << "step (A1 A2 B1 B2) " <<  step_n << " " << step_q[step_n] << " pos: " << pos << endl;
     for(auto pin_n : {0,1,2,3}){
-        const bool val = step_q[step_n][pin_n];
+        bool val = step_q[step_n][pin_n];
         pins[pin_n].write(val);
     }
     step_n = (step_n+_dir) & 3;
     pos+= _dir;
     cout << "next step " << step_n << endl;
+}
+void StepMtr::init(){
+    reset();
+    set_pos_limit(-1000, 1000);
+    set_dir(StepMtr::BWD);
+    set_speed(100);
+    run_pos(pos_limit.first);
+    reset();
 }
 
 void StepMtr::run_pos(int t_pos){
@@ -54,7 +63,7 @@ void StepMtr::run_pos(int t_pos){
         lock_guard<mutex>lk(notice_mx);
         notice.notify_one();
     }
-    while(this->pos != t_pos && started){
+    while(this->get_pos() != t_pos && started){
         next_step();
         int sleep_ms = 1000/this->speed; //ms
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));

@@ -36,7 +36,7 @@ public:
         return *this;
     }
     void write(const bool value){
-        std::cout << CLI_BLUE << "GPIO#" << _pin << "(" << _name << ") "<< value << CLI_RESET << std::endl;
+        // std::cout << CLI_BLUE << "GPIO#" << _pin << "(" << _name << ") "<< value << CLI_RESET << std::endl;
         if(!_desc) return;
         auto err = gpio_write(_desc, value);
         if(err){
