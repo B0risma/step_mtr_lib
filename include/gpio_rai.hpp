@@ -42,7 +42,7 @@ public:
         if(err){
             pr_err(std::string("gpio_write err") + std::to_string(err));
         }
-        usleep(200); //need it for stable pin write!!!!!
+        usleep(200); //need it for stable pin write!!!!!// maybe dont
     }
     inline void set(){write(true);}
     inline void reset(){write(false);}
