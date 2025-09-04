@@ -66,13 +66,20 @@ int main(int argc, char ** argv){
                 else if(dir == '-') mtr.set_dir(StepMtr::BWD);
                 else break;
                 cout << "step: " << dir << endl;
-                mtr.next_step();
+                mtr.do_step();
                 break;
             }
             case 'v':{
                 int speed;
                 cin >> speed;
                 mtr.set_speed(speed);
+                break;
+            }
+            case 'm':{
+                // Full=0 Half=1
+                int mode;
+                cin >> mode;
+                mtr.set_mode(StepMtr::Mode(mode));
                 break;
             }
             default:
