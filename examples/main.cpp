@@ -14,7 +14,6 @@
 #include <unistd.h>
 #include <cstring>
 #include <vector>
-#include "gpio_rai.hpp"
 #include <csignal>
 
 using namespace std;
@@ -33,7 +32,7 @@ void init_mtr(StepMtr &mtr){
 
 int main(int argc, char ** argv){
     // exec_cmd();
-    StepMtr mtr({104,106, 108, 113});
+    StepMtr mtr(104,106, 108, 113);
     // mtr.init(120);
     // mtr.set_pos_limit(0, 100);
     char cmd = 0;
@@ -66,7 +65,7 @@ int main(int argc, char ** argv){
                 else if(dir == '-') mtr.set_dir(StepMtr::BWD);
                 else break;
                 cout << "step: " << dir << endl;
-                mtr.do_step();
+                mtr.one_step();
                 break;
             }
             case 'v':{
@@ -149,7 +148,7 @@ void exec_cmd(){
 }
 
 void async_example(){
-    StepMtr mtr({104, 106, 108, 113});
+    StepMtr mtr(104, 106, 108, 113);
     mtr.set_dir(StepMtr::FWD);
     mtr.set_speed(100);
     auto fut = std::async(std::launch::async, &StepMtr::run_pos, &mtr, 100);
