@@ -1,5 +1,5 @@
 #include "step_mtr.h"
-#include "gpio_rai.hpp"
+#include "gpio_raii.hpp"
 #include <chrono>
 #include <cstdint>
 #include <iostream>
@@ -19,28 +19,44 @@ T clamp(const T& in, const T& min, const T& max){
     return  std::min(std::max(in, min), max);
 }
 
-StepMtr::StepMtr(const std::initializer_list<int> &list){
-    pins[3] = Gpio(*list.begin(), 1); //A1
-    pins[2] = Gpio(*(list.begin()+1), 1); //A2
-    pins[1] = Gpio(*(list.begin()+2), 1); //B1
-    pins[0] = Gpio(*(list.begin()+3), 1); //B2
-    busy = false;
+StepMtr::StepMtr(const uint16_t a1, const uint16_t a2, const uint16_t b1, const uint16_t b2){
+    pins[3] = Gpio(a1, 1);
+    pins[2] = Gpio(a2, 1);
+    pins[1] = Gpio(b1, 1);
+    pins[0] = Gpio(b2, 1);
     started = false;
     set_mode(FULL);
     set_pos_limit(0, 100);
 }
 
+int StepMtr::one_step(){
+    if(unlikely(started)){
+        busy_err();
+        return 1;
+    }
+    started = true;
+    do_step();
+    started = false;
+    return 0;
+}
+
 void StepMtr::do_step(){
-    cout << "step (A1 A2 B1 B2) " <<  step_n << " " << (*step_q)[step_n] << " pos: " << _pos << endl;
+    // cout << "step (A1 A2 B1 B2) " <<  step_n << " " << (*step_q)[step_n] << " pos: " << _pos << endl;
+    started = true;
     for(auto pin_n : {0,1,2,3}){
         bool val = (*step_q)[step_n][pin_n];
         pins[pin_n].write(val);
     }
-    step_n = (step_n + _dir) & (step_q->size()-1);
+    const int dir = _dir * inverse_move;
+    step_n = (step_n + dir) & (step_q->size()-1);
     _pos+= _dir;
     // cout << "next step " << step_n << endl;
 }
-void StepMtr::init(const int step_range){
+int StepMtr::init(const int step_range){
+    if(unlikely(started)){
+        busy_err();
+        return 1;
+    }
     assign_pos(0);
     set_pos_limit(-step_range, step_range);
     set_dir(StepMtr::BWD);
@@ -48,16 +64,19 @@ void StepMtr::init(const int step_range){
     run_pos(pos_limit.first);
     set_pos_limit(0, step_range);
     assign_pos(0);
+    return 0;
 }
 
-void StepMtr::run_pos(int t_pos){
-    int tmp_pos = clamp(t_pos, pos_limit.first, pos_limit.second);
-    if(tmp_pos != t_pos || t_pos == _pos) return;
+int StepMtr::run_pos(int t_pos){
+    if(unlikely(started)){
+        busy_err();
+        return 1;
+    }
+    if(unlikely(t_pos < pos_limit.first || t_pos > pos_limit.second))
+        return 1;
     const int32_t steps = int32_t(t_pos - _pos);
     set_dir(steps < 0 ? BWD : FWD);
-    busy = true;
     started = true;
-    // int sleep_ms = 1000/this->speed; //ms
     {
         lock_guard<mutex>lk(notice_mx);
         notice.notify_one();
@@ -66,21 +85,27 @@ void StepMtr::run_pos(int t_pos){
         do_step();
         std::this_thread::sleep_for(std::chrono::milliseconds(step_interval));
     }
-    busy = false;
     started = false;
     // cout << "pos: " << pos << endl;
+    return 0;
 }
 
-void StepMtr::set_mode(Mode mod){
+int StepMtr::set_mode(Mode mod){
+    if(unlikely(started)){
+        busy_err();
+        return 1;
+    }
     if(mod == HALF) step_q = &half;
     else step_q = &full; 
+    return 0;
 }
 
 // infinity run
-void StepMtr::run(){
-    if(busy) return;
-
-    busy = true;
+int StepMtr::run(){
+    if(unlikely(started)){
+        busy_err();
+        return 1;
+    }
     started = true;
     {
         lock_guard<mutex>lk(notice_mx);
@@ -90,8 +115,8 @@ void StepMtr::run(){
         this->do_step();
         std::this_thread::sleep_for(std::chrono::milliseconds(step_interval));
     }
-    busy = false;
     started = false;
+    return 0;
 }
 
 void StepMtr::stop(){
